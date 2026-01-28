@@ -34,24 +34,23 @@
 <div id="search-bar"><input type="text" id="filter-input" placeholder="Search farm or region"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
   const map = L.map('map').setView([-30.5595, 22.9375], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkJjO6kqzeYW-qFE1NMYg4KyZcVe30aB0ZSXHRonHsmh1NSmVqZC0tsj9F052Ncvugh8wIHNNFI3NE/export?format=csv";
+  // Live Apps Script URL
+  const sheetUrl = "https://script.google.com/macros/s/AKfycbxnTFzlWamjgwcA3nOQLAKKnFZtQY6IXtrI0gbtPRosakVkpZWJZ08TduRvCXjsmqRlmQ/exec";
   let markers = [];
 
   function loadMarkers(filter=''){
-    Papa.parse(sheetUrl, {
-      download:true,
-      header:true,
-      complete:function(results){
+    fetch(sheetUrl)
+      .then(res=>res.json())
+      .then(data=>{
         markers.forEach(m=>map.removeLayer(m));
         markers=[];
-        results.data.forEach(farm=>{
+        data.forEach(farm=>{
           if(!farm['Farm name'] || !farm.Latitude || !farm.Longitude) return;
           if(filter && !farm['Farm name'].toLowerCase().includes(filter.toLowerCase()) && !farm.Region?.toLowerCase().includes(filter.toLowerCase())) return;
 
@@ -90,8 +89,7 @@
             loadMarkers(document.getElementById('filter-input').value);
           });
         });
-      }
-    });
+      });
   }
 
   loadMarkers();
