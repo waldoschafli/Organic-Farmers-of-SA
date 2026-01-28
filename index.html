@@ -41,7 +41,7 @@
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const sheetUrl = "https://docs.google.com/spreadsheets/d/1wRweNi4iQ01WEXxXD7GB623_2AJcw62AVJ6K5r0cyMs/gviz/tq?tqx=out:csv";
+  const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkJjO6kqzeYW-qFE1NMYg4KyZcVe30aB0ZSXHRonHsmh1NSmVqZC0tsj9F052Ncvugh8wIHNNFI3NE/pub?output=csv";
   let markers = [];
 
   function loadMarkers(filter=''){
@@ -49,7 +49,6 @@
       download:true,
       header:true,
       complete:function(results){
-        // remove old markers
         markers.forEach(m=>map.removeLayer(m));
         markers=[];
         results.data.forEach(farm=>{
@@ -84,29 +83,25 @@
           markers.push(marker);
         });
 
-        // Attach star click events
         document.querySelectorAll('.star').forEach(star=>{
           star.addEventListener('click',e=>{
             const farmName=e.target.dataset.farm;
             const starValue=parseInt(e.target.dataset.star);
             localStorage.setItem(`farm-${farmName}`, starValue);
-            loadMarkers(document.getElementById('filter-input').value); // refresh popup
+            loadMarkers(document.getElementById('filter-input').value);
           });
         });
       }
     });
   }
 
-  // Initial load
   loadMarkers();
   setInterval(()=>loadMarkers(document.getElementById('filter-input').value),60000);
 
-  // Search
   document.getElementById('filter-input').addEventListener('input',e=>{
     loadMarkers(e.target.value);
   });
 
-  // Location button
   document.getElementById('get-location').addEventListener('click',function(e){
     e.preventDefault();
     if(navigator.geolocation){
