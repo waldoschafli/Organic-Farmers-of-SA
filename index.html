@@ -53,8 +53,8 @@
         markers.forEach(m=>map.removeLayer(m));
         markers=[];
         results.data.forEach(farm=>{
-          if(!farm.Name || !farm.Latitude || !farm.Longitude) return;
-          if(filter && !farm.Name.toLowerCase().includes(filter.toLowerCase()) && !farm.Region?.toLowerCase().includes(filter.toLowerCase())) return;
+          if(!farm['Farm name'] || !farm.Latitude || !farm.Longitude) return;
+          if(filter && !farm['Farm name'].toLowerCase().includes(filter.toLowerCase()) && !farm.Region?.toLowerCase().includes(filter.toLowerCase())) return;
 
           const links=[];
           if(farm.Website) links.push(`<a href="${farm.Website}" target="_blank">Website</a>`);
@@ -62,16 +62,16 @@
           if(farm.YouTube) links.push(`<a href="${farm.YouTube}" target="_blank">YouTube</a>`);
 
           // Star rating
-          let rating=JSON.parse(localStorage.getItem(`farm-${farm.Name}`))||0;
+          let rating=JSON.parse(localStorage.getItem(`farm-${farm['Farm name']}`))||0;
           let stars='';
           for(let i=1;i<=5;i++){
-            stars+=`<span class="star" data-farm="${farm.Name}" data-star="${i}">${i<=rating?'★':'☆'}</span>`;
+            stars+=`<span class="star" data-farm="${farm['Farm name']}" data-star="${i}">${i<=rating?'★':'☆'}</span>`;
           }
 
           const popupContent=`
             <div class="popup">
-              <h3>${farm.Name}</h3>
-              <p>${farm.Bio}</p>
+              <h3>${farm['Farm name']}</h3>
+              <p>${farm['Short Bio']}</p>
               <p>${links.join(' ')}</p>
               <p>${stars}</p>
             </div>
