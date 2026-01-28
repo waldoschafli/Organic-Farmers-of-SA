@@ -1,61 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Organic Farmers of South Africa</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    body {margin:0;font-family:system-ui,sans-serif;background:#f5f5f2;}
-    #map {height:100vh;width:100%;}
-    .popup h3{margin:0 0 .3rem;font-size:1.05rem;}
-    .popup p{margin:.3rem 0;font-size:.85rem;line-height:1.4;}
-    .popup a{display:inline-block;margin-right:.5rem;font-size:.8rem;color:#2f5d3a;text-decoration:none;font-weight:500;}
-    .popup a:hover{text-decoration:underline;}
-    .add-farm-btn{
-      position: absolute; bottom: 20px; right: 20px; z-index:1000;
-      background:#2f5d3a;color:#fff;padding:.6rem 1rem;border-radius:6px;font-weight:600;text-decoration:none;
-      box-shadow:0 2px 6px rgba(0,0,0,.3);
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Organic Farmers of South Africa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body {margin:0;font-family:system-ui,sans-serif;background:#f5f5f2;}
+  #map {height:100vh;width:100%;}
+  .popup h3{margin:0 0 .3rem;font-size:1.05rem;}
+  .popup p{margin:.3rem 0;font-size:.85rem;line-height:1.4;}
+  .popup a{display:inline-block;margin-right:.5rem;font-size:.8rem;color:#2f5d3a;text-decoration:none;font-weight:500;}
+  .popup a:hover{text-decoration:underline;}
+  .add-farm-btn,.get-location-btn{position:absolute;right:20px;z-index:1000;background:#2f5d3a;color:#fff;padding:.6rem 1rem;border-radius:6px;font-weight:600;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.3);}
+  .add-farm-btn{bottom:20px;}
+  .get-location-btn{bottom:80px;}
+  #location-output{position:absolute;bottom:140px;right:20px;z-index:1000;background:#fff;padding:8px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.3);font-size:0.85rem;white-space:pre;}
+  #search-bar{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1000;}
+  #search-bar input{padding:.5rem 1rem;border-radius:6px;border:1px solid #ccc;font-size:0.95rem;width:200px;}
+  .star{cursor:pointer;color:gold;font-size:1rem;margin-right:2px;}
+</style>
 </head>
 <body>
+
 <div id="map"></div>
+
+<!-- Buttons -->
 <a href="https://forms.gle/LpSVGsm8dGY1Bip48" target="_blank" class="add-farm-btn">➕ Add a farm</a>
+<a href="#" id="get-location" class="get-location-btn">📍 Find my location</a>
+<div id="location-output"></div>
+
+<!-- Search -->
+<div id="search-bar"><input type="text" id="filter-input" placeholder="Search farm or region"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
-  // Initialize map
   const map = L.map('map').setView([-30.5595, 22.9375], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Google Sheet CSV URL (converted from your sheet)
   const sheetUrl = "https://docs.google.com/spreadsheets/d/1ThbKbPWjwSHFm13jFUjaZo66uyIjgWam6bAVZp1x_Jk/gviz/tq?tqx=out:csv";
+  let markers = [];
 
-  // Fetch CSV and create markers
-  Papa.parse(sheetUrl, {
-    download: true,
-    header: true,
-    complete: function(results){
-      results.data.forEach(farm => {
-        if(!farm.Name || !farm.Latitude || !farm.Longitude) return; // skip empty rows
-        const links = [];
-        if(farm.Website) links.push(`<a href="${farm.Website}" target="_blank">Website</a>`);
-        if(farm.Instagram) links.push(`<a href="${farm.Instagram}" target="_blank">Instagram</a>`);
-        if(farm.YouTube) links.push(`<a href="${farm.YouTube}" target="_blank">YouTube</a>`);
-        const popupContent = `
-          <div class="popup">
-            <h3>${farm.Name}</h3>
-            <p>${farm.Bio}</p>
-            <p>${links.join(' ')}</p>
-          </div>`;
-        L.marker([parseFloat(farm.Latitude), parseFloat(farm.Longitude)])
-          .addTo(map)
-          .bindPopup(popupContent);
+  function loadMarkers(filter=''){
+    Papa.parse(sheetUrl, {
+      download:true,
+      header:true,
+      complete:function(results){
+        // remove old markers
+        markers.forEach(m=>map.removeLayer(m));
+        markers=[];
+        results.data.forEach(farm=>{
+          if(!farm.Name || !farm.Latitude || !farm.Longitude) return;
+          if(filter && !farm.Name.toLowerCase().includes(filter.toLowerCase()) && !farm.Region?.toLowerCase().includes(filter.toLowerCase())) return;
+
+          const links=[];
+          if(farm.Website) links.push(`<a href="${farm.Website}" target="_blank">Website</a>`);
+          if(farm.Instagram) links.push(`<a href="${farm.Instagram}" target="_blank">Instagram</a>`);
+          if(farm.YouTube) links.push(`<a href="${farm.YouTube}" target="_blank">YouTube</a>`);
+
+          // Star rating
+          let rating=JSON.parse(localStorage.getItem(`farm-${farm.Name}`))||0;
+          let stars='';
+          for(let i=1;i<=5;i++){
+            stars+=`<span class="star" data-farm="${farm.Name}" data-star="${i}">${i<=rating?'★':'☆'}</span>`;
+          }
+
+          const popupContent=`
+            <div class="popup">
+              <h3>${farm.Name}</h3>
+              <p>${farm.Bio}</p>
+              <p>${links.join(' ')}</p>
+              <p>${stars}</p>
+            </div>
+          `;
+
+          const marker=L.marker([parseFloat(farm.Latitude), parseFloat(farm.Longitude)])
+            .addTo(map)
+            .bindPopup(popupContent);
+
+          markers.push(marker);
+        });
+
+        // Attach star click events
+        document.querySelectorAll('.star').forEach(star=>{
+          star.addEventListener('click',e=>{
+            const farmName=e.target.dataset.farm;
+            const starValue=parseInt(e.target.dataset.star);
+            localStorage.setItem(`farm-${farmName}`, starValue);
+            loadMarkers(document.getElementById('filter-input').value); // refresh popup
+          });
+        });
+      }
+    });
+  }
+
+  // Initial load
+  loadMarkers();
+  setInterval(()=>loadMarkers(document.getElementById('filter-input').value),60000);
+
+  // Search
+  document.getElementById('filter-input').addEventListener('input',e=>{
+    loadMarkers(e.target.value);
+  });
+
+  // Location button
+  document.getElementById('get-location').addEventListener('click',function(e){
+    e.preventDefault();
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(function(pos){
+        const lat=pos.coords.latitude.toFixed(6);
+        const lng=pos.coords.longitude.toFixed(6);
+        document.getElementById('location-output').innerText=`Latitude: ${lat}\nLongitude: ${lng}\nCopy these into the form fields.`;
+      }, function(err){
+        alert('Could not get your location. Please allow location access.');
       });
+    }else{
+      alert('Geolocation not supported on this device.');
     }
   });
 </script>
