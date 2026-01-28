@@ -1,108 +1,63 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Organic Farmers of South Africa</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />  <!-- Leaflet CSS -->  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f5f2;
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {margin:0;font-family:system-ui,sans-serif;background:#f5f5f2;}
+    #map {height:100vh;width:100%;}
+    .popup h3{margin:0 0 .3rem;font-size:1.05rem;}
+    .popup p{margin:.3rem 0;font-size:.85rem;line-height:1.4;}
+    .popup a{display:inline-block;margin-right:.5rem;font-size:.8rem;color:#2f5d3a;text-decoration:none;font-weight:500;}
+    .popup a:hover{text-decoration:underline;}
+    .add-farm-btn{
+      position: absolute; bottom: 20px; right: 20px; z-index:1000;
+      background:#2f5d3a;color:#fff;padding:.6rem 1rem;border-radius:6px;font-weight:600;text-decoration:none;
+      box-shadow:0 2px 6px rgba(0,0,0,.3);
     }
-    header {
-      padding: 1rem 1.2rem;
-      background: #2f5d3a;
-      color: #fff;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.3rem;
-    }
-    header p {
-      margin: 0.3rem 0 0;
-      font-size: 0.9rem;
-      opacity: 0.9;
-    }
-    #map {
-      height: calc(100vh - 80px);
-      width: 100%;
-    }
-    .popup h3 {
-      margin: 0 0 0.3rem;
-      font-size: 1.05rem;
-    }
-    .popup p {
-      margin: 0.3rem 0;
-      font-size: 0.85rem;
-      line-height: 1.4;
-    }
-    .popup a {
-      display: inline-block;
-      margin-right: 0.5rem;
-      font-size: 0.8rem;
-      color: #2f5d3a;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .popup a:hover {
-      text-decoration: underline;
-    }
-  </style></head>
+  </style>
+</head>
 <body>
-  <header>
-    <h1>Organic Farmers of South Africa</h1>
-    <p>A free, community-built map of regenerative & organic growers</p>
-  </header>  <div id="map"></div>  <!-- Leaflet JS -->  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>  <script>
-    // Initialize map centered on South Africa
-    const map = L.map('map').setView([-30.5595, 22.9375], 5);
+<div id="map"></div>
+<a href="https://forms.gle/LpSVGsm8dGY1Bip48" target="_blank" class="add-farm-btn">➕ Add a farm</a>
 
-    // Free OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+  // Initialize map
+  const map = L.map('map').setView([-30.5595, 22.9375], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
 
-    // Example farmer data (you will edit / expand this)
-    const farmers = [
-      {
-        name: "Example Organic Farm",
-        lat: -33.988,
-        lng: 22.452,
-        bio: "Family-run organic farm focusing on soil regeneration and pastured livestock.",
-        website: "https://example.com",
-        instagram: "https://instagram.com/example",
-        youtube: ""
-      },
-      {
-        name: "Mountain Roots Farm",
-        lat: -29.858,
-        lng: 31.021,
-        bio: "Certified organic vegetables and seed saving in KZN.",
-        website: "",
-        instagram: "https://instagram.com/mountainroots",
-        youtube: "https://youtube.com/@mountainroots"
-      }
-    ];
+  // Google Sheet CSV URL (converted from your sheet)
+  const sheetUrl = "https://docs.google.com/spreadsheets/d/1ThbKbPWjwSHFm13jFUjaZo66uyIjgWam6bAVZp1x_Jk/gviz/tq?tqx=out:csv";
 
-    // Add markers
-    farmers.forEach(farm => {
-      const links = [];
-      if (farm.website) links.push(`<a href="${farm.website}" target="_blank">Website</a>`);
-      if (farm.instagram) links.push(`<a href="${farm.instagram}" target="_blank">Instagram</a>`);
-      if (farm.youtube) links.push(`<a href="${farm.youtube}" target="_blank">YouTube</a>`);
-
-      const popupContent = `
-        <div class="popup">
-          <h3>${farm.name}</h3>
-          <p>${farm.bio}</p>
-          <p>${links.join(' ')}</p>
-        </div>
-      `;
-
-      L.marker([farm.lat, farm.lng])
-        .addTo(map)
-        .bindPopup(popupContent);
-    });
-  </script></body>
-  </html>
+  // Fetch CSV and create markers
+  Papa.parse(sheetUrl, {
+    download: true,
+    header: true,
+    complete: function(results){
+      results.data.forEach(farm => {
+        if(!farm.Name || !farm.Latitude || !farm.Longitude) return; // skip empty rows
+        const links = [];
+        if(farm.Website) links.push(`<a href="${farm.Website}" target="_blank">Website</a>`);
+        if(farm.Instagram) links.push(`<a href="${farm.Instagram}" target="_blank">Instagram</a>`);
+        if(farm.YouTube) links.push(`<a href="${farm.YouTube}" target="_blank">YouTube</a>`);
+        const popupContent = `
+          <div class="popup">
+            <h3>${farm.Name}</h3>
+            <p>${farm.Bio}</p>
+            <p>${links.join(' ')}</p>
+          </div>`;
+        L.marker([parseFloat(farm.Latitude), parseFloat(farm.Longitude)])
+          .addTo(map)
+          .bindPopup(popupContent);
+      });
+    }
+  });
+</script>
+</body>
+</html>
