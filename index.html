@@ -41,7 +41,7 @@
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkJjO6kqzeYW-qFE1NMYg4KyZcVe30aB0ZSXHRonHsmh1NSmVqZC0tsj9F052Ncvugh8wIHNNFI3NE/pub?output=csv";
+  const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkJjO6kqzeYW-qFE1NMYg4KyZcVe30aB0ZSXHRonHsmh1NSmVqZC0tsj9F052Ncvugh8wIHNNFI3NE/export?format=csv";
   let markers = [];
 
   function loadMarkers(filter=''){
@@ -58,7 +58,6 @@
           const links=[];
           if(farm.Website) links.push(`<a href="${farm.Website}" target="_blank">Website</a>`);
           if(farm.Instagram) links.push(`<a href="${farm.Instagram}" target="_blank">Instagram</a>`);
-          if(farm.YouTube) links.push(`<a href="${farm.YouTube}" target="_blank">YouTube</a>`);
 
           // Star rating
           let rating=JSON.parse(localStorage.getItem(`farm-${farm['Farm name']}`))||0;
