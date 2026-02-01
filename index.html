@@ -46,6 +46,7 @@
   let markers = [];
   console.log('line 47 | '+sheetUrl);
   function loadMarkers(filter=''){
+    console.log('line 49 | '+sheetUrl);
     fetch(sheetUrl)
       .then(res=>res.json())
       .then(data=>{
