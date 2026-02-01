@@ -50,6 +50,8 @@
       .then(data=>{
         markers.forEach(m=>map.removeLayer(m));
         markers=[];
+        telling = 0;
+        console.log('tel almal')
         data.forEach(farm=>{
           if(!farm['Farm name'] || !farm.Latitude || !farm.Longitude) return;
           if(filter && !farm['Farm name'].toLowerCase().includes(filter.toLowerCase()) && !farm.Region?.toLowerCase().includes(filter.toLowerCase())) return;
@@ -57,6 +59,9 @@
           const links=[];
           if(farm.Website) links.push(`<a href="${farm.Website}" target="_blank">Website</a>`);
           if(farm.Instagram) links.push(`<a href="${farm.Instagram}" target="_blank">Instagram</a>`);
+
+          telling+=;
+          console.log(telling)
 
           // Star rating
           let rating=JSON.parse(localStorage.getItem(`farm-${farm['Farm name']}`))||0;
