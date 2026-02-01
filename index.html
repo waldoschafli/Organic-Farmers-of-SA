@@ -22,7 +22,7 @@
 </style>
 </head>
 <body>
-
+<div id="timodiv" width=100 height=200 border-color:red>MY DIV </div>
 <div id="map"></div>
 
 <!-- Buttons -->
@@ -51,7 +51,7 @@
         markers.forEach(m=>map.removeLayer(m));
         markers=[];
         telling = 0;
-        console.log('tel almal')
+        console.log('tel almal');
         data.forEach(farm=>{
           if(!farm['Farm name'] || !farm.Latitude || !farm.Longitude) return;
           if(filter && !farm['Farm name'].toLowerCase().includes(filter.toLowerCase()) && !farm.Region?.toLowerCase().includes(filter.toLowerCase())) return;
