@@ -44,7 +44,7 @@
   // Live Apps Script URL
   const sheetUrl = "https://script.google.com/macros/s/AKfycbxnTFzlWamjgwcA3nOQLAKKnFZtQY6IXtrI0gbtPRosakVkpZWJZ08TduRvCXjsmqRlmQ/exec";
   let markers = [];
-  console.log('line 47');
+  console.log('line 47 | '+sheetUrl);
   function loadMarkers(filter=''){
     fetch(sheetUrl)
       .then(res=>res.json())
